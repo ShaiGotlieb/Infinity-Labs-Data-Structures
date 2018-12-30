@@ -183,29 +183,12 @@ int main()
 {
 	RUN_TEST(TestDVectorCreate);
 	RUN_TEST(TestDVectorPushEnd);
-/*	RUN_TEST(TestDVectorPopEnd);*/
+	RUN_TEST(TestDVectorPopEnd);
 	RUN_TEST(TestDVectorGetSize);
-/*	RUN_TEST(TestDVectorFindItemIndex);
+	RUN_TEST(TestDVectorFindItemIndex);
 	RUN_TEST(TestDVectorGetCapacity);
-	RUN_TEST(TestDVectorSetCapacity);*/
-/*	dvector_t *v = DVectorCreate(sizeof(int), 3);
-	int i = 8;
-	int j = 14;
-	int *to_push = &i;
-	int *to_push1 = &j;
-	DVectorPushEnd(v, to_push1);
-	DVectorPushEnd(v, to_push);
-	DVectorPushEnd(v, to_push);
-	DVectorPushEnd(v, to_push);
-	DVectorPushEnd(v, to_push);
-	printf("%d\n", DVectorFindItemIndex(v, to_push1));
-	DVectorPopEnd(v);
-	DVectorPopEnd(v);
-	DVectorPopEnd(v);
-	DVectorPopEnd(v);
-	printf("%d\n", DVectorGetSize(v));
-	printf("%d\n", DVectorGetCapacity(v));
-	DVectorDestroy(v);*/
+	RUN_TEST(TestDVectorSetCapacity);
+
 
 	return EXIT_SUCCESS;
 }
