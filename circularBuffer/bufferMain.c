@@ -42,6 +42,7 @@ TestResult TestCBufferWrite()
 	
 	REQUIRE(written_bytes == 0);
 
+	CBufferDestroy(buffer);
 	return TEST_PASS;
 }
 
@@ -64,6 +65,7 @@ TestResult TestCBufferRead()
 	result_bytes = CBufferRead(buffer, read_element, 11);
 	REQUIRE(0 == result_bytes);
 
+	CBufferDestroy(buffer);
 	return TEST_PASS;
 }
 
@@ -76,6 +78,7 @@ TestResult TestCBufferIsEmpty()
 	CBufferWrite(buffer, element, 36);
 	REQUIRE(CBufferIsEmpty(buffer) == FALSE);
 
+	CBufferDestroy(buffer);
 	return TEST_PASS;
 }
 
@@ -83,11 +86,14 @@ TestResult TestCBufferGetCapacity()
 {
 	cbuffer_t *buffer = CBufferCreate(20);
 	REQUIRE(CBufferGetCapacity(buffer) == 20);
+	CBufferDestroy(buffer);
 	buffer = CBufferCreate(200);
 	REQUIRE(CBufferGetCapacity(buffer) == 200);
+	CBufferDestroy(buffer);
 	buffer = CBufferCreate(0);
 	REQUIRE(CBufferGetCapacity(buffer) == 0);
 
+	CBufferDestroy(buffer);
 	return TEST_PASS;
 }
 
@@ -98,6 +104,7 @@ TestResult TestCBufferGetSize()
 	CBufferWrite(buffer, "hell", 1);
 	REQUIRE(CBufferGetSize(buffer) == 1);
 
+	CBufferDestroy(buffer);
 	return TEST_PASS;
 }
 
@@ -108,6 +115,7 @@ TestResult TestCBufferClear()
 	CBufferClear(buffer);
 	REQUIRE(CBufferGetSize(buffer) == 0);
 
+	CBufferDestroy(buffer);
 	return TEST_PASS;
 }
 
