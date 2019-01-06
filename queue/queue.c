@@ -5,7 +5,8 @@
 
 #define TRUE 1
 #define FALSE 0
-
+#define QUEUE_SIZE_WITH_DUMMY 1
+#define DEADBEEF 0xDEADBEEF
 
 struct queue_s
 {
@@ -24,7 +25,7 @@ queue_t *QueCreate()
 		return NULL;
 	}
 	
-	dummy = SLLCreateNode(NULL, NULL); 
+	dummy = SLLCreateNode(NULL, (void*)DEADBEEF); 
 	if (NULL == dummy)
 	{
 		free(queue);
@@ -39,14 +40,9 @@ queue_t *QueCreate()
 
 void QueDestroy(queue_t *queue)
 {
-	while(queue != NULL)
-	{
-		SLLDestroyNodes(queue->head);
-		free(queue);
-		queue = NULL;
-	}
-
+	SLLDestroyNodes(queue->head);
 	free(queue);
+	queue = NULL;
 }
 
 enum q_status Enqueue(queue_t *queue, void *data)
@@ -55,8 +51,9 @@ enum q_status Enqueue(queue_t *queue, void *data)
 
 	assert(queue != NULL);
 	
-	if (SLLInsert(queue->tail, node_to_insert) != NULL && node_to_insert != NULL)
+	if (NULL != node_to_insert)
 	{
+		SLLInsert(queue->tail, node_to_insert);
 		queue->tail = queue->tail->next;
 		return Q_SUCCESS;
 	}
@@ -71,41 +68,45 @@ void *Dequeue(queue_t *queue)
 	
 	assert(queue != NULL);
 
-	removed_node = SLLRemove(queue->head);
-	return_data = removed_node->data;
+	return_data = queue->head->data;
+	removed_node = queue->head;
+	queue->head = queue->head->next;
 
-	SLLDestroyNodes(removed_node);
-	
+	free(removed_node);
+
 	return return_data;	
 }
 
 void *QuePeek(const queue_t *queue)
 {
+	assert(queue != NULL);
 	return queue->head->data;
 }
 
 int QueIsEmpty(const queue_t *queue)
 {
-	return SLLCount(queue->head) > 1 ? FALSE : TRUE;
+	assert(queue != NULL);
+	return SLLCount(queue->head) > QUEUE_SIZE_WITH_DUMMY ? FALSE : TRUE;
 }
 
 size_t QueGetSize(const queue_t *queue)
 {
-	return SLLCount(queue->head) - 1; /* dummy is always inside */
+	return SLLCount(queue->head) - QUEUE_SIZE_WITH_DUMMY; 
 }
 
 void QueAppend(queue_t *first_queue, queue_t *last_queue)
 {
+	sllist_node_t *dummy = NULL;
+
 	assert(NULL != first_queue);
 	assert(NULL != last_queue);
 
-	first_queue->tail->next = last_queue->head->next;
-	
-	if (NULL != last_queue->head->next)
+	if (!QueIsEmpty(last_queue))
 	{
+		first_queue->tail->next = last_queue->head;
+		dummy = SLLRemove(first_queue->tail);
 		first_queue->tail = last_queue->tail;
+		last_queue->tail = dummy;
+		last_queue->head = dummy;
 	}
-	
-	last_queue->head->next = NULL;
-
 }
