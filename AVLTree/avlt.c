@@ -1,8 +1,9 @@
 #include <stdlib.h> /* malloc, size_t, free */
 #include <assert.h> /* assert */
+
 #include "avlt.h"
 
-#define CHILDREN_SIZE (2)
+#define NUM_OF_CHILDREN (2)
 #define TRUE (1)
 #define FALSE (0)
 #define SUCCESS (0)
@@ -14,7 +15,7 @@ typedef enum {LL = 0, RR = 1, LR = 2, RL = 3, BALANCED = 4} BALANCE_TYPE;
 typedef struct tree_node_s
 {
 	void *data;
-	struct tree_node_s *children[CHILDREN_SIZE];
+	struct tree_node_s *children[NUM_OF_CHILDREN];
 	long height;
 		
 }tree_node_t;
@@ -33,6 +34,7 @@ static tree_node_t *RemoveNode(avlt_t *tree, tree_node_t *node, const void *data
 static tree_node_t *CreateNode(void *data);
 static tree_node_t *FindNode(tree_node_t *node, const void *data, cmp_func_avlt_t cmp_func, void* param);
 static tree_node_t *MostLeftChild(tree_node_t *node);
+static tree_node_t *BalanceTree(tree_node_t *node, BALANCE_TYPE balance_type, int balance_factor);
 static BALANCE_TYPE InsertCheckBalanceType(tree_node_t *node, long balance_factor ,void *data, is_before_avlt_t is_before);
 static BALANCE_TYPE RemoveCheckBalanceType(tree_node_t *node, long balance_factor);
 static long CalculateBalance(tree_node_t *node);
@@ -148,7 +150,8 @@ void AVLTRemove(avlt_t *tree, const void *data)
 
 static tree_node_t *RemoveNode(avlt_t *tree, tree_node_t *node, const void *data)
 {
-	size_t balance_factor = 0;
+	BALANCE_TYPE balance_type = BALANCED;
+	long balance_factor = 0;
 
 	if (NULL == node)
 	{
@@ -198,8 +201,14 @@ static tree_node_t *RemoveNode(avlt_t *tree, tree_node_t *node, const void *data
 
 	node->height = 1 + GetMaxHeight(GetHeight(node->children[LEFT]) , GetHeight(node->children[RIGHT]));
 	balance_factor = CalculateBalance(node);
+	balance_type = RemoveCheckBalanceType(node, balance_factor);
 
-	switch (RemoveCheckBalanceType(node, balance_factor))
+	return (BalanceTree(node, balance_type, balance_factor));
+}
+
+static tree_node_t *BalanceTree(tree_node_t *node, BALANCE_TYPE balance_type, int balance_factor)
+{
+	switch (balance_type)
 	{
 		case LL:
 			 return (RotateRight(node));
@@ -260,9 +269,15 @@ static int ForEach(tree_node_t *node, action_func_avlt_t action_func, void *para
 
 	if (NULL != node && return_status == SUCCESS)
 	{
-		ForEach(node->children[LEFT], action_func, param);
+		return_status = ForEach(node->children[LEFT], action_func, param);
+		
 		return_status = action_func(node->data, param);
-		ForEach(node->children[RIGHT], action_func, param);
+		if (return_status == FAILURE)
+		{
+			return (FAILURE);
+		}
+		
+		return_status = ForEach(node->children[RIGHT], action_func, param);
 	}
 
 	return (return_status);
@@ -404,6 +419,7 @@ static long GetHeight(tree_node_t *node)
 
 static tree_node_t *InsertRecursive(avlt_t *tree, tree_node_t *current_node, void *data)
 {
+	BALANCE_TYPE balance_type = BALANCED;
 	long balance_factor = 0;
 	int go_left = TRUE;
 
@@ -424,30 +440,10 @@ static tree_node_t *InsertRecursive(avlt_t *tree, tree_node_t *current_node, voi
 	}
 
 	current_node->height = GetMaxHeight(GetHeight(current_node->children[LEFT]),GetHeight(current_node->children[RIGHT])) + 1;
-	
 	balance_factor = CalculateBalance(current_node);
+	balance_type = InsertCheckBalanceType(current_node, balance_factor, data, tree->is_before);
 
-	switch (InsertCheckBalanceType(current_node, balance_factor, data, tree->is_before))
-	{
-		case LL:
-			return (RotateRight(current_node));
-
-		case RR:
-			return (RotateLeft(current_node));
-
-		case LR:
-			current_node->children[LEFT] = RotateLeft(current_node->children[LEFT]);
-			return (RotateRight(current_node));
-
-		case RL:
-			current_node->children[RIGHT] = RotateRight(current_node->children[RIGHT]);
-			return (RotateLeft(current_node));
-
-		case BALANCED:
-			break;
-	}
-
-	return (current_node);
+	return (BalanceTree(current_node, balance_type, balance_factor));
 }
 
 static tree_node_t *CreateNode(void *data)
